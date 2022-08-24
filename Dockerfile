@@ -44,10 +44,8 @@ RUN set -ex && \
     apt-get update && \
     apt install s3fs -y
 
-ARG ACCESS_KEY_ID
-ARG SECRET_ACCESS_KEY
-
-RUN echo "s3fs#${BUCKET_NAME} ${OPERATOR_HOME}/${BUCKET_NAME} fuse _netdev,allow_other,nonempty,umask=000,uid=${OPERATOR_UID},gid=${OPERATOR_UID},passwd_file=${OPERATOR_HOME}/.s3fs-creds,use_cache=/tmp,url=${S3_ENDPOINT} 0 0" >> /etc/fstab
+# setup s3fs configs
+RUN echo "s3fs#${BUCKET_NAME} ${OPERATOR_HOME}/s3_bucket fuse _netdev,allow_other,nonempty,umask=000,uid=${OPERATOR_UID},gid=${OPERATOR_UID},passwd_file=${OPERATOR_HOME}/.s3fs-creds,use_cache=/tmp,url=${S3_ENDPOINT} 0 0" >> /etc/fstab
 RUN sed -i '/user_allow_other/s/^#//g' /etc/fuse.conf
 
 # Set our user to the operator user
@@ -55,15 +53,12 @@ USER ${OPERATOR_USER}
 WORKDIR ${OPERATOR_HOME}
 COPY main.py .
 
-# Not recomended to bake credentails inside image.
-# Idea: initiated at run-time!
-RUN echo $ACCESS_KEY_ID:$SECRET_ACCESS_KEY > ${OPERATOR_HOME}/.s3fs-creds
-RUN chmod 400 ${OPERATOR_HOME}/.s3fs-creds
-RUN mkdir ${OPERATOR_HOME}/${BUCKET_NAME}
-
 RUN printf '#!/usr/bin/env bash  \n\
+echo ${ACCESS_KEY_ID}:${SECRET_ACCESS_KEY} > ${OPERATOR_HOME}/.s3fs-creds \n\
+chmod 400 ${OPERATOR_HOME}/.s3fs-creds \n\
+mkdir ${OPERATOR_HOME}/s3_bucket \n\
 mount -a \n\
-exec python ${OPERATOR_HOME}/main.py "$@" \
+exec python ${OPERATOR_HOME}/main.py \
 ' >> ${OPERATOR_HOME}/entrypoint.sh
 
 RUN chmod 700 ${OPERATOR_HOME}/entrypoint.sh

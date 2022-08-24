@@ -42,15 +42,12 @@ Watch video tutorial on [YouTube](https://www.youtube.com/watch?v=de4uZ2yCGlg);
 Build the image
 
 ```dockerfile
-docker build . -t <your_tag_here> \
-    --build-arg BUCKET_NAME=<your_s3_bucket_name> \
-    --build-arg ACCESS_KEY_ID=<access_key_id> \
-    --build-arg SECRET_ACCESS_KEY=<secret_access_key>
+docker build . -t <your_tag_here> --build-arg BUCKET_NAME=<your_s3_bucket_name>
 ```
 
 run container
 ```dockerfile
-docker run -it --privileged <image_tag> --bucket-name=<your_s3_bucket_name>
+docker run -it -e ACCESS_KEY_ID=<access_key_id> -e SECRET_ACCESS_KEY=<secret_access_key> --privileged <image_tag>
 ```
 
 ### Using different base image
